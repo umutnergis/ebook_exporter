@@ -1,9 +1,12 @@
 from PIL import Image, ImageGrab
 from pyautogui import alert, prompt
+import pyautogui
 from pynput import mouse
 from gui_helper import GuiHelper
 import os
 from time import sleep
+from threading import Thread
+import img2pdf
 
 GAP_TIME = 2
 
@@ -32,16 +35,26 @@ class app:
         self.data = {}
 
     def runAsync(self):
-        self.listener = mouse.Listener(on_click=self.on_click)
-        self.listener.start()
+        with mouse.Listener(on_click=self.on_click) as listener:
+            self.listener = listener
+            listener.join()
 
     def startProcessing(self):
-        path = "Images/"+str(self.pageCount)+".jpeg"
         counter = 0
-        while counter < self.pageCount:
-            self.saveImage(path)
-            self.nextPage()
-            counter += 1
+        try:
+            while counter < self.pageCount:
+                path = "Images/"+str(counter)+".jpeg"
+                self.saveImage(path)
+                self.nextPage()
+                counter += 1
+            self.convert_image_to_pdf()
+            sleep(GAP_TIME)
+            exit()
+        except Exception as e:
+            alert("An error occurred while saving the image.\nPlease try again.", "Error")
+            print(e)
+            exit()
+
 
     def saveImage(self, path):
         ImageGrab.grab().save(path)
@@ -59,10 +72,11 @@ class app:
         cropped_img = img.crop(box=box)
         cropped_img.save(path)
 
-    def nextPage(self):
-        mouse.position = self.data[NEXT_BUTTON]
-        mouse.click(button="left")
-        sleep(GAP_TIME)
+    def nextPage(self): 
+        position = self.data[NEXT_BUTTON]
+        print(position)
+        Thread(target=pyautogui.click, args=(position[0],position[1])).start()     
+        sleep(GAP_TIME) 
 
     def on_click(self, x, y, button, pressed):
         if pressed:
@@ -74,11 +88,23 @@ class app:
                 elif len(self.data) == 2:
                     self.data[NEXT_BUTTON] = (x, y)
                 elif len(self.data) == 3:
-                    GuiHelper.show(
-                        title="Info", text=f"Starting the save process.\nFolder to save: {os.getcwd()}/Images")
-                    self.startProcessing()
                     self.listener.stop()
-
+                    self.startProcessing()
+                
+    def convert_image_to_pdf(self):
+        list = []
+        if not os.path.exists("PDF"):
+            try:
+                os.mkdir("PDF")
+            except OSError as e:
+                alert(
+                    "An error occurred while creating the folder.\nPlease try again.", "Error")
+                exit()
+        for i in range(self.pageCount):
+            list.append("Images/"+str(i)+".jpeg")
+        with open("PDF/output.pdf", "wb") as f:
+            f.write(img2pdf.convert(list))
 
 if __name__ == "__main__":
     app().runAsync()
+
