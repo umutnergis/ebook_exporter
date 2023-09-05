@@ -31,6 +31,13 @@ class app:
                 alert(
                     "An error occurred while creating the folder.\nPlease try again.", "Error")
                 exit()
+        if not os.path.exists("PDF"):
+            try:
+                os.mkdir("PDF")
+            except OSError as e:
+                alert(
+                    "An error occurred while creating the folder.\nPlease try again.", "Error")
+                exit()
 
         self.data = {}
 
@@ -93,13 +100,6 @@ class app:
                 
     def convert_image_to_pdf(self):
         list = []
-        if not os.path.exists("PDF"):
-            try:
-                os.mkdir("PDF")
-            except OSError as e:
-                alert(
-                    "An error occurred while creating the folder.\nPlease try again.", "Error")
-                exit()
         for i in range(self.pageCount):
             list.append("Images/"+str(i)+".jpeg")
         with open("PDF/output.pdf", "wb") as f:
