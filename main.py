@@ -24,15 +24,9 @@ class app:
             alert("The number of pages cannot be 0", "Error")
             exit()
         alert("When you close this message, clicks will start.\nThe first click should be at the top left corner of the page\nThe second click is at the bottom right corner of the page\nThe third click should be the next button.", "Info")
-        if not os.path.exists("Images"):
+        if (not os.path.exists("Images")) and (not os.path.exists("PDF")):
             try:
                 os.mkdir("Images")
-            except OSError as e:
-                alert(
-                    "An error occurred while creating the folder.\nPlease try again.", "Error")
-                exit()
-        if not os.path.exists("PDF"):
-            try:
                 os.mkdir("PDF")
             except OSError as e:
                 alert(
